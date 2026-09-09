@@ -1,0 +1,11 @@
+{
+  "bundle": {
+    "macOS": {
+      "files": {
+        "MacOS/mlx.metallib": null,
+        "MacOS/libonnxruntime.dylib": null
+      }
+    },
+    "externalBin": ["bun", "ffmpeg", "ffprobe", "mlx.metallib"]
+  }
+}
