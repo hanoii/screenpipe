@@ -1178,14 +1178,14 @@ pub async fn set_cloud_token(
     let restrict_paid_features = settings
         .as_ref()
         .map(|settings| settings.restricts_paid_local_features())
-        .unwrap_or(true);
+        .unwrap_or(!crate::local_only::LOCAL_ONLY);
     if let Some(settings) = settings.as_ref() {
         crate::recording::refresh_history_access_policy(&state.history_access, settings);
     } else {
         // Missing/corrupt settings are unattributed on consumer builds.
         state
             .history_access
-            .set_last_24_hours(!cfg!(feature = "enterprise-build"));
+            .set_last_24_hours(!crate::local_only::LOCAL_ONLY && !cfg!(feature = "enterprise-build"));
     }
     let pipe_manager = {
         let server = state.server.lock().await;
