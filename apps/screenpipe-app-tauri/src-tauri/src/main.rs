@@ -40,6 +40,7 @@ use updates::start_update_check;
 use window::ShowRewindWindow;
 
 mod activity_history;
+mod local_only;
 mod first_run_summary;
 mod analytics;
 mod auth_session;
@@ -257,6 +258,9 @@ fn get_env(name: &str) -> String {
 /// egress, missing permissions dialog). When set, startup marks onboarding
 /// complete so the app lands on the main view.
 fn should_skip_onboarding() -> bool {
+    if crate::local_only::LOCAL_ONLY {
+        return true;
+    }
     std::env::var("SCREENPIPE_SKIP_ONBOARDING")
         .ok()
         .map(|s| matches!(s.trim().to_lowercase().as_str(), "1" | "true" | "yes"))

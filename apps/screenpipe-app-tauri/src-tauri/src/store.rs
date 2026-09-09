@@ -2452,6 +2452,9 @@ impl SettingsStore {
     /// server-verified plan evidence. Missing, conflicting, stale-paid, and
     /// future-dated evidence remains explicitly unknown.
     pub(crate) fn local_plan_policy(&self) -> LocalPlanPolicy {
+        if crate::local_only::LOCAL_ONLY {
+            return LocalPlanPolicy::VerifiedPaid;
+        }
         if self.has_verified_paid_plan() {
             LocalPlanPolicy::VerifiedPaid
         } else if self.has_verified_free_plan() {
