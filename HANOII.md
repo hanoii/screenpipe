@@ -50,6 +50,10 @@ Set `LOCAL_ONLY = false` to get stock upstream behavior back.
 
 ## Rebase
 
+`./rebuild.sh` does the whole loop: sync `main` with upstream, push main and
+tags, rebase `custom` onto the latest `app-v*` tag, build, and copy the
+install command to the clipboard. Manual equivalent:
+
 ```sh
 git fetch upstream
 git rebase upstream/main
@@ -86,7 +90,7 @@ No separate `screenpipe` CLI binary is needed. Skip the root
 # quit the installed screenpipe first: same data dir, same port 3030
 cd apps/screenpipe-app-tauri
 bun install
-set -gx APPLE_SIGNING_IDENTITY "Apple Development: abarrei@gmail.com (2382RRSSH3)"
+set -gx APPLE_SIGNING_IDENTITY (security find-identity -v -p codesigning | sed -n 's/.*"\(Apple Development: [^"]*\)".*/\1/p' | head -1)
 bun tauri build --bundles app --config src-tauri/tauri.local.conf.json
 cp -R "src-tauri/target/release/bundle/macos/screenpipe - Development.app" /Applications/
 open "/Applications/screenpipe - Development.app"
