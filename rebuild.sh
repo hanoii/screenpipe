@@ -5,7 +5,17 @@
 # 2. Rebase `custom` onto the latest app-v* release tag.
 # 3. Build the signed local-only release app.
 # 4. Print the install command and copy it to the clipboard.
+#
+# Stops after syncing main when no new app-v* tag exists; --force rebuilds
+# anyway.
 set -euo pipefail
+
+FORCE=0
+case "${1:-}" in
+  --force) FORCE=1 ;;
+  "") ;;
+  *) echo "usage: $0 [--force]" >&2; exit 2 ;;
+esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$REPO_ROOT/apps/screenpipe-app-tauri"
@@ -37,16 +47,17 @@ cd "$REPO_ROOT"
 
 [ -n "$SIGNING_IDENTITY" ] || die "no valid 'Apple Development' signing identity found (security find-identity -v -p codesigning); see HANOII.md"
 
-if [ -n "$(git status --porcelain)" ]; then
-  die "working tree not clean; commit or stash first"
-fi
-
 # The assume-unchanged flag on gen/schemas makes checkout/rebase fail with
 # "would be overwritten" when upstream touches those files. Drop it for the
-# git operations and restore it at the end.
+# git operations and restore it at the end. Restoring the files first also
+# keeps build-generated noise out of the clean-tree check below.
 log "Restoring generated schema files"
 schemas_unhide
 trap 'schemas_hide' EXIT
+
+if [ -n "$(git status --porcelain)" ]; then
+  die "working tree not clean; commit or stash first"
+fi
 
 log "Fetching upstream"
 git fetch upstream --tags
@@ -61,6 +72,18 @@ git push origin --tags
 
 RELEASE_TAG="$(git tag --list 'app-v*' --sort=-v:refname | head -1)"
 [ -n "$RELEASE_TAG" ] || die "no app-v* tag found"
+
+# Only a new release tag triggers a rebuild. Unreleased commits on main are
+# ignored unless --force is given.
+if [ "$FORCE" = 0 ] && git merge-base --is-ancestor "$RELEASE_TAG" custom; then
+  cat <<MSG
+
+No new release: custom is already rebased onto $RELEASE_TAG.
+Run ./rebuild.sh --force to rebuild anyway.
+MSG
+  git checkout custom
+  exit 0
+fi
 
 log "Rebasing custom onto $RELEASE_TAG"
 git checkout custom
