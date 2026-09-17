@@ -52,7 +52,10 @@ Set `LOCAL_ONLY = false` to get stock upstream behavior back.
 
 `./rebuild.sh` does the whole loop: sync `main` with upstream, push main and
 tags, rebase `custom` onto the latest `app-v*` tag, build, and copy the
-install command to the clipboard. Manual equivalent:
+install command to the clipboard. It stops after the sync when `custom`
+already contains the target. `--main` rebases onto `main` instead of the tag,
+to pick up unreleased upstream fixes. `--force` builds even when nothing is
+new. Manual equivalent:
 
 ```sh
 git fetch upstream
