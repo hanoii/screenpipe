@@ -120,11 +120,17 @@ fi
 
 log "Building release app (signed as: $SIGNING_IDENTITY)"
 cd "$APP_DIR"
+BUILD_MARKER="$(mktemp)"
 bun install
 APPLE_SIGNING_IDENTITY="$SIGNING_IDENTITY" \
   bun tauri build --bundles app --config src-tauri/tauri.local.conf.json
 
 [ -d "$BUNDLE_PATH" ] || die "build finished but bundle not found at: $BUNDLE_PATH"
+# A leftover bundle from an older build passes the check above. Upstream once
+# renamed the product, and this script kept installing the stale app.
+[ "$BUNDLE_PATH/Contents/MacOS/screenpipe-app" -nt "$BUILD_MARKER" ] \
+  || die "bundle at $BUNDLE_PATH is older than this build; check productName in tauri.conf.json / tauri.local.conf.json"
+rm -f "$BUILD_MARKER"
 
 printf '%s' "$INSTALL_CMD" | pbcopy
 
