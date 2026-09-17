@@ -1,4 +1,6 @@
 {
+  "productName": "screenpipe - Development",
+  "identifier": "screenpi.pe.dev",
   "bundle": {
     "macOS": {
       "files": {
