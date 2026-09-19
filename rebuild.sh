@@ -2,8 +2,9 @@
 # Personal helper for the `custom` branch. Not for upstream. See HANOII.md.
 #
 # 1. Sync main with upstream/main and push it (plus all tags) to origin.
-# 2. Rebase `custom` onto the latest app-v* release tag (or main with --main)
-#    and force-push it (with lease) to origin.
+# 2. Rebase `custom` onto the latest app-v* release tag (or main with --main).
+#    custom is force-pushed (with lease) to origin on every run, like main,
+#    whether or not there was anything to rebase or the build succeeds.
 # 3. Build the signed local-only release app.
 # 4. Print the install command and copy it to the clipboard.
 #
@@ -38,6 +39,15 @@ INSTALL_CMD="cp -R \"$BUNDLE_PATH\" /Applications/ && open \"/Applications/scree
 
 log() { printf '\n==> %s\n' "$*"; }
 die() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
+
+# custom is rewritten by the rebase, so a plain push is rejected.
+# --force-with-lease refuses to clobber commits pushed from elsewhere;
+# --force-if-includes additionally requires those commits to have been
+# integrated locally (guards against a stale origin/custom after a fetch).
+push_custom() {
+  log "Pushing custom to origin"
+  git push --force-with-lease --force-if-includes origin custom
+}
 
 schemas_unhide() {
   git ls-files "$SCHEMAS_DIR" | xargs git update-index --no-assume-unchanged
@@ -94,6 +104,7 @@ Nothing new: custom is already rebased onto $TARGET_DESC.
 Run ./rebuild.sh --force to rebuild anyway$([ "$USE_MAIN" = 1 ] || printf ', or --main to pick up unreleased main').
 MSG
   git checkout custom
+  push_custom
   exit 0
 fi
 
@@ -119,12 +130,7 @@ MSG
   exit 1
 fi
 
-# The rebase rewrites custom's history, so a plain push is rejected.
-# --force-with-lease refuses to clobber commits pushed from elsewhere;
-# --force-if-includes additionally requires those commits to have been
-# integrated locally (guards against a stale origin/custom after a fetch).
-log "Pushing custom to origin"
-git push --force-with-lease --force-if-includes origin custom
+push_custom
 
 log "Building release app (signed as: $SIGNING_IDENTITY)"
 cd "$APP_DIR"
