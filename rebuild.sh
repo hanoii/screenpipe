@@ -2,7 +2,8 @@
 # Personal helper for the `custom` branch. Not for upstream. See HANOII.md.
 #
 # 1. Sync main with upstream/main and push it (plus all tags) to origin.
-# 2. Rebase `custom` onto the latest app-v* release tag (or main with --main).
+# 2. Rebase `custom` onto the latest app-v* release tag (or main with --main)
+#    and force-push it (with lease) to origin.
 # 3. Build the signed local-only release app.
 # 4. Print the install command and copy it to the clipboard.
 #
@@ -117,6 +118,13 @@ a no-op, and --force skips the nothing-new stop so the build still runs).
 MSG
   exit 1
 fi
+
+# The rebase rewrites custom's history, so a plain push is rejected.
+# --force-with-lease refuses to clobber commits pushed from elsewhere;
+# --force-if-includes additionally requires those commits to have been
+# integrated locally (guards against a stale origin/custom after a fetch).
+log "Pushing custom to origin"
+git push --force-with-lease --force-if-includes origin custom
 
 log "Building release app (signed as: $SIGNING_IDENTITY)"
 cd "$APP_DIR"
