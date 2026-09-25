@@ -136,6 +136,17 @@ log "Building release app (signed as: $SIGNING_IDENTITY)"
 cd "$APP_DIR"
 BUILD_MARKER="$(mktemp)"
 bun install
+# bun install never prunes packages that bun.lock no longer lists. Tauri CLI
+# scans node_modules/@tauri-apps/* directly and fails on a crate/npm version
+# mismatch, so an orphaned plugin package breaks the build after an upstream
+# rebase drops the npm dep. Remove orphans before building.
+for dir in node_modules/@tauri-apps/*/; do
+  pkg="@tauri-apps/$(basename "$dir")"
+  if ! grep -q "\"$pkg\"" bun.lock; then
+    log "Removing orphaned $pkg (not in bun.lock)"
+    rm -rf "$dir"
+  fi
+done
 APPLE_SIGNING_IDENTITY="$SIGNING_IDENTITY" \
   bun tauri build --bundles app --config src-tauri/tauri.local.conf.json
 
