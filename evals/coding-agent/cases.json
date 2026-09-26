@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite": "screenpipe-app-coding-agent-regressions",
-  "dataset_version": "2026-09-26.4",
+  "dataset_version": "2026-09-26.5",
   "suite_type": "regression",
   "owner": "screenpipe engineering",
   "policy": {
@@ -3607,6 +3607,42 @@
           }
         ],
         "command": "cd packages/ai-gateway && \"${BUN_BIN:-bun}\" test src/test/eval-settlement-replay.test.ts --timeout=10000"
+      }
+    },
+    {
+      "id": "app-consumer-stale-managed-settings",
+      "name": "Release stale managed settings only on confirmed consumer builds",
+      "source": {
+        "kind": "git_regression",
+        "fix_commit": "9712ee210f7efc7f85e98bcc1e80c4c4173450dc"
+      },
+      "base_ref": "335ca8d842d1ac0311c038a72a5c3bf084081340",
+      "oracle_ref": "9712ee210f7efc7f85e98bcc1e80c4c4173450dc",
+      "oracle_paths": [
+        "apps/screenpipe-app-tauri/lib/hooks/use-settings.tsx",
+        "apps/screenpipe-app-tauri/lib/hooks/use-is-enterprise-build.ts"
+      ],
+      "tags": [
+        "regression",
+        "escaped-failure",
+        "privacy",
+        "settings"
+      ],
+      "prompt": "Consumer and enterprise installations can share a settings store. A confirmed consumer build currently keeps enforcing stale enterpriseManagedSettings, silently undoing personal choices. Repair actual settings loading, updating and resetting so an authoritative native consumer result releases the stale managed values and durably removes that cached policy. Loading must preserve the existing personal screenshot and font choices. Writes must persist new choices, survive reload and retain unrelated settings. Reset must restore ordinary defaults without restoring the stale policy. An enterprise build or failed native build check must continue enforcing and retaining managed screenshot and font values on read, write and reset; unrelated settings must remain editable. With no cached policy, ordinary edits must still persist in all three situations. Exercise the real settings provider and store actions, their queued disk-write completion and reload using synthetic native, storage and external ports. Do not perform native builds, network operations or actual user-file writes. This case checks frontend persistence and its build-authority gate; it does not authorize recording, migration, changes to native policy ownership or real device enforcement. No helper name or implementation structure is required.",
+      "agent_timeout_seconds": 1200,
+      "grader": {
+        "timeout_seconds": 60,
+        "fixtures": [
+          {
+            "local_path": "graders/stale-policy.test.js",
+            "destination_path": "evals/coding-agent/graders/stale-policy.test.js"
+          },
+          {
+            "local_path": "graders/stale-policy.mjs",
+            "destination_path": "evals/coding-agent/graders/stale-policy.mjs"
+          }
+        ],
+        "command": "cd apps/screenpipe-app-tauri && \"${BUN_BIN:-bun}\" ../../evals/coding-agent/graders/stale-policy.mjs"
       }
     }
   ]

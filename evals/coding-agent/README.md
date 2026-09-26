@@ -13,6 +13,16 @@ The current app corpus contains 80 git-mined regressions. See
 [DESIGN.md](./DESIGN.md) for the Anthropic guidance, source contract, and
 history-mining workflow. The companion website manifest uses this same harness.
 
+`app-consumer-stale-managed-settings` runs actual settings read, write and reset
+operations, the write queue and build-authority gate against synthetic native,
+store, React rendering and external ports. Confirmed consumer builds release stale
+policy; enterprise builds and failed IPC preserve it. Twelve outcomes include
+ordinary edits without cached policy. The parent fails three consumer outcomes
+and preserves nine; the reference and current source pass twelve.
+Run `bun test evals/coding-agent/calibrate-stale-policy.test.js` for calibration.
+The task concerns persisted frontend choices, not actual native recording,
+migration authority, store encryption, IPC delivery, isolation or model quality.
+
 `app-card-ask-login-hydration` runs the actual provider, controller and dialog
 with synthetic external ports. Nine outcomes cover initial and delayed account
 loading, post-mount sign-in, once-per-install persistence and suppressed prompts.
