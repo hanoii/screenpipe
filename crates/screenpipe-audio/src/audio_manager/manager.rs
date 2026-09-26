@@ -569,6 +569,7 @@ impl AudioManager {
                     audio_rx,
                     self.db.clone(),
                     self.engine.clone(),
+                    self.on_transcription_insert.clone(),
                 ));
             }
         }
