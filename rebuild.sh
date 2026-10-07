@@ -8,6 +8,12 @@
 # 3. Build the signed local-only release app.
 # 4. Print the install command and copy it to the clipboard.
 #
+# --install replaces the installed app with the last build and relaunches it.
+# Quit alone does not exit the app: with "Keep search available after
+# quitting" on (the default), the process stays alive with no tray or Dock
+# icon, and `open` reattaches to the old code. The built-in updater restarts
+# itself, but a copied bundle does not, so --install stops the process first.
+#
 # Stops after syncing main when custom already contains the rebase target
 # (no new app-v* tag, or with --main no new commits on main); --force rebuilds
 # anyway. --main picks up unreleased upstream fixes.
@@ -15,11 +21,13 @@ set -euo pipefail
 
 FORCE=0
 USE_MAIN=0
+INSTALL=0
 for arg in "$@"; do
   case "$arg" in
     --force) FORCE=1 ;;
     --main) USE_MAIN=1 ;;
-    *) echo "usage: $0 [--main] [--force]" >&2; exit 2 ;;
+    --install) INSTALL=1 ;;
+    *) echo "usage: $0 [--main] [--force] | --install" >&2; exit 2 ;;
   esac
 done
 
@@ -35,10 +43,38 @@ find_signing_identity() {
 }
 SIGNING_IDENTITY="${APPLE_SIGNING_IDENTITY:-$(find_signing_identity)}"
 BUNDLE_PATH="$APP_DIR/src-tauri/target/release/bundle/macos/screenpipe - Development.app"
-INSTALL_CMD="cp -R \"$BUNDLE_PATH\" /Applications/ && open \"/Applications/screenpipe - Development.app\""
+INSTALLED_PATH="/Applications/screenpipe - Development.app"
+INSTALLED_BIN="$INSTALLED_PATH/Contents/MacOS/screenpipe-app"
+INSTALL_CMD="\"$REPO_ROOT/rebuild.sh\" --install"
 
 log() { printf '\n==> %s\n' "$*"; }
 die() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
+
+install_app() {
+  [ -d "$BUNDLE_PATH" ] || die "no build at: $BUNDLE_PATH"
+  if pgrep -f "$INSTALLED_BIN" >/dev/null; then
+    log "Stopping running screenpipe (SIGTERM)"
+    pkill -TERM -f "$INSTALLED_BIN" || true
+    for _ in $(seq 1 30); do
+      pgrep -f "$INSTALLED_BIN" >/dev/null || break
+      sleep 1
+    done
+    ! pgrep -f "$INSTALLED_BIN" >/dev/null \
+      || die "screenpipe still running after 30s; stop it and rerun $0 --install"
+  fi
+  # Replace instead of copying over: cp -R into an existing bundle keeps
+  # files the new build dropped.
+  log "Installing $INSTALLED_PATH"
+  rm -rf "$INSTALLED_PATH"
+  cp -R "$BUNDLE_PATH" /Applications/
+  open "$INSTALLED_PATH"
+}
+
+if [ "$INSTALL" = 1 ]; then
+  [ "$FORCE" = 0 ] && [ "$USE_MAIN" = 0 ] || die "--install takes no other flags"
+  install_app
+  exit 0
+fi
 
 # custom is rewritten by the rebase, so a plain push is rejected.
 # --force-with-lease refuses to clobber commits pushed from elsewhere;
@@ -162,8 +198,9 @@ printf '%s' "$INSTALL_CMD" | pbcopy
 cat <<MSG
 
 Build done: custom is rebased onto $TARGET_DESC.
-Quit the running screenpipe app (same data dir and port 3030), then run the
-install command. It is already on your clipboard:
+Run the install command. It stops the running screenpipe (same data dir and
+port 3030), replaces the app, and relaunches it. It is already on your
+clipboard:
 
   $INSTALL_CMD
 
