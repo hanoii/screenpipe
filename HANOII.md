@@ -55,7 +55,10 @@ tags, rebase `custom` onto the latest `app-v*` tag, build, and copy the
 install command to the clipboard. It stops after the sync when `custom`
 already contains the target. `--main` rebases onto `main` instead of the tag,
 to pick up unreleased upstream fixes. `--force` builds even when nothing is
-new. Manual equivalent:
+new. `./rebuild.sh --install` stops the running app, replaces it with the
+last build, and relaunches it. Quit alone is not enough: with "Keep search
+available after quitting" on, the process stays alive without tray or Dock
+icon, and `open` reattaches to the old code. Manual equivalent of the rebase:
 
 ```sh
 git fetch upstream
@@ -90,7 +93,8 @@ No separate `screenpipe` CLI binary is needed. Skip the root
 `cargo build --release` steps in `CONTRIBUTING.md`.
 
 ```fish
-# quit the installed screenpipe first: same data dir, same port 3030
+# stop the installed screenpipe first: same data dir, same port 3030.
+# Quit keeps the process alive (search-only), so: ./rebuild.sh --install
 cd apps/screenpipe-app-tauri
 bun install
 set -gx APPLE_SIGNING_IDENTITY (security find-identity -v -p codesigning | sed -n 's/.*"\(Apple Development: [^"]*\)".*/\1/p' | head -1)
