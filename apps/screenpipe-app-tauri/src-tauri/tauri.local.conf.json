@@ -1,13 +1,4 @@
 {
   "productName": "screenpipe - Development",
-  "identifier": "screenpi.pe.dev",
-  "bundle": {
-    "macOS": {
-      "files": {
-        "MacOS/mlx.metallib": null,
-        "MacOS/libonnxruntime.dylib": null
-      }
-    },
-    "externalBin": ["bun", "ffmpeg", "ffprobe", "mlx.metallib"]
-  }
+  "identifier": "screenpi.pe.dev"
 }
