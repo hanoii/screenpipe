@@ -103,12 +103,11 @@ cp -R "src-tauri/target/release/bundle/macos/screenpipe - Development.app" /Appl
 open "/Applications/screenpipe - Development.app"
 ```
 
-`src-tauri/tauri.local.conf.json` mirrors what `release-app.yml` does for
-arm64: it moves `mlx.metallib` from `bundle.macOS.files` to `externalBin` so
-Tauri signs it as a sidecar, and drops the 0-byte `libonnxruntime.dylib`
-placeholder. Without it, signing with a real identity fails with
-`code object is not signed at all` on `Contents/MacOS/mlx.metallib`.
-The `null` entries rely on Tauri's RFC 7396 merge, which deletes keys.
+`src-tauri/tauri.local.conf.json` only pins the product name and bundle id.
+It must not touch `mlx.metallib`: upstream stages it in `.macos-sidecars`
+(`pre_build.js`) as a signed resource plus a `MacOS/mlx.metallib` symlink.
+Listing it in `externalBin` as well makes bundling fail with
+`Failed to copy directory "../.macos-sidecars" to ".": File exists`.
 
 Bundle id is `screenpi.pe.dev`, so it coexists with the installed app in
 `/Applications` but shares `~/.screenpipe`. Never run both at once.
