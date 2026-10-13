@@ -97,6 +97,10 @@ schemas_hide() {
 cd "$REPO_ROOT"
 
 [ -n "$SIGNING_IDENTITY" ] || die "no valid 'Apple Development' signing identity found (security find-identity -v -p codesigning); see HANOII.md"
+# parakeet-mlx compiles MLX Metal shaders. Xcode 26 ships the Metal compiler as
+# a separate component; without it the build dies minutes in, inside mlx-sys.
+xcrun -sdk macosx metal --version >/dev/null 2>&1 \
+  || die "Metal Toolchain missing; run: xcodebuild -downloadComponent MetalToolchain"
 
 # The assume-unchanged flag on gen/schemas makes checkout/rebase fail with
 # "would be overwritten" when upstream touches those files. Drop it for the
