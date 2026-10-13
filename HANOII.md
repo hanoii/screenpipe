@@ -103,7 +103,11 @@ cp -R "src-tauri/target/release/bundle/macos/screenpipe - Development.app" /Appl
 open "/Applications/screenpipe - Development.app"
 ```
 
-`src-tauri/tauri.local.conf.json` only pins the product name and bundle id.
+`src-tauri/tauri.local.conf.json` pins the product name, the bundle id and
+`minimumSystemVersion` 14.0. Tauri exports that value as
+`MACOSX_DEPLOYMENT_TARGET`; with the 10.13 default the MLX Metal shaders
+(`parakeet-mlx`, via `mlx-sys`) fail to compile. The build also needs the Xcode
+Metal Toolchain: `xcodebuild -downloadComponent MetalToolchain`.
 It must not touch `mlx.metallib`: upstream stages it in `.macos-sidecars`
 (`pre_build.js`) as a signed resource plus a `MacOS/mlx.metallib` symlink.
 Listing it in `externalBin` as well makes bundling fail with
