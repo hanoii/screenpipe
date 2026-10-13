@@ -67,7 +67,13 @@ install_app() {
   log "Installing $INSTALLED_PATH"
   rm -rf "$INSTALLED_PATH"
   cp -R "$BUNDLE_PATH" /Applications/
-  open "$INSTALLED_PATH"
+  # LaunchServices can still hold the replaced bundle right after the copy and
+  # fail with error -600. Retry instead of leaving the app stopped.
+  for _ in $(seq 1 5); do
+    open "$INSTALLED_PATH" && return
+    sleep 2
+  done
+  die "installed, but could not launch $INSTALLED_PATH; open it manually"
 }
 
 if [ "$INSTALL" = 1 ]; then
