@@ -183,8 +183,11 @@ for dir in node_modules/@tauri-apps/*/; do
     rm -rf "$dir"
   fi
 done
+# Default features leave Whisper and Parakeet on CPU. Match the official Apple
+# Silicon release: metal for Whisper, parakeet-mlx for Parakeet on the GPU.
 APPLE_SIGNING_IDENTITY="$SIGNING_IDENTITY" \
-  bun tauri build --bundles app --config src-tauri/tauri.local.conf.json
+  bun tauri build --bundles app --config src-tauri/tauri.local.conf.json \
+    --features metal,parakeet-mlx
 
 [ -d "$BUNDLE_PATH" ] || die "build finished but bundle not found at: $BUNDLE_PATH"
 # A leftover bundle from an older build passes the check above. Upstream once
