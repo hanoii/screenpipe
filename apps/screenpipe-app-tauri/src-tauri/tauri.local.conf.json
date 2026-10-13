@@ -1,4 +1,9 @@
 {
   "productName": "screenpipe - Development",
-  "identifier": "screenpi.pe.dev"
+  "identifier": "screenpi.pe.dev",
+  "bundle": {
+    "macOS": {
+      "minimumSystemVersion": "14.0"
+    }
+  }
 }
