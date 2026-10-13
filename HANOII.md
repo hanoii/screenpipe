@@ -98,7 +98,7 @@ No separate `screenpipe` CLI binary is needed. Skip the root
 cd apps/screenpipe-app-tauri
 bun install
 set -gx APPLE_SIGNING_IDENTITY (security find-identity -v -p codesigning | sed -n 's/.*"\(Apple Development: [^"]*\)".*/\1/p' | head -1)
-bun tauri build --bundles app --config src-tauri/tauri.local.conf.json
+bun tauri build --bundles app --config src-tauri/tauri.local.conf.json --features metal,parakeet-mlx
 cp -R "src-tauri/target/release/bundle/macos/screenpipe - Development.app" /Applications/
 open "/Applications/screenpipe - Development.app"
 ```
