@@ -50,9 +50,11 @@ Set `LOCAL_ONLY = false` to get stock upstream behavior back.
 
 ## Rebase
 
-`./rebuild.sh` does the whole loop: sync `main` with upstream, push main and
-tags, rebase `custom` onto the latest `app-v*` tag, build, and copy the
-install command to the clipboard. It stops after the sync when `custom`
+`./rebuild.sh` does the whole loop: make `main` and all tags match upstream
+exactly, locally and on `origin` (local commits on `main` and local-only tags
+are discarded), rebase `custom` onto the latest `app-v*` tag, build, and copy
+the install command to the clipboard. Other branches on `origin` are left
+alone. It stops after the sync when `custom`
 already contains the target. `--main` rebases onto `main` instead of the tag,
 to pick up unreleased upstream fixes. `--force` builds even when nothing is
 new. `./rebuild.sh --install` stops the running app, replaces it with the

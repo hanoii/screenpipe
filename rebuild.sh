@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Personal helper for the `custom` branch. Not for upstream. See HANOII.md.
 #
-# 1. Sync main with upstream/main and push it (plus all tags) to origin.
+# 1. Make main and all tags match upstream exactly, locally and on origin.
 # 2. Rebase `custom` onto the latest app-v* release tag (or main with --main).
 #    custom is force-pushed (with lease) to origin on every run, like main,
 #    whether or not there was anything to rebase or the build succeeds.
@@ -121,15 +121,18 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 log "Fetching upstream"
-git fetch upstream --tags
+# Upstream always wins for main and tags. Force is required for moving tags:
+# upstream re-points cli-latest on every CLI release, which a plain fetch and
+# push both reject. Prune drops tags upstream deleted, and any local-only tags.
+git fetch --force --prune upstream '+refs/heads/*:refs/remotes/upstream/*' '+refs/tags/*:refs/tags/*'
 
-log "Merging upstream/main into main"
-git checkout main
-git merge --no-edit upstream/main
+log "Resetting main to upstream/main"
+git checkout --no-track -B main upstream/main
 
-log "Pushing main and tags to origin"
-git push origin main
-git push origin --tags
+log "Force-pushing main and tags to origin"
+git push --force origin main
+# Prune only applies within this refspec, so origin's branches are safe.
+git push --force --prune origin 'refs/tags/*:refs/tags/*'
 
 if [ "$USE_MAIN" = 1 ]; then
   TARGET=main
