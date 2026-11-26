@@ -100,6 +100,8 @@ No separate `screenpipe` CLI binary is needed. Skip the root
 cd apps/screenpipe-app-tauri
 bun install
 set -gx APPLE_SIGNING_IDENTITY (security find-identity -v -p codesigning | sed -n 's/.*"\(Apple Development: [^"]*\)".*/\1/p' | head -1)
+# Xcode 27.2 linker workaround, see below.
+set -gx CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTFLAGS "-C link-arg=-Wl,-platform_version,macos,14.0,26.0"
 bun tauri build --bundles app --config src-tauri/tauri.local.conf.json --features metal,parakeet-mlx
 cp -R "src-tauri/target/release/bundle/macos/screenpipe - Development.app" /Applications/
 open "/Applications/screenpipe - Development.app"
@@ -110,6 +112,12 @@ open "/Applications/screenpipe - Development.app"
 `MACOSX_DEPLOYMENT_TARGET`; with the 10.13 default the MLX Metal shaders
 (`parakeet-mlx`, via `mlx-sys`) fail to compile. The build also needs the Xcode
 Metal Toolchain: `xcodebuild -downloadComponent MetalToolchain`.
+
+Xcode 27.2's linker can misalign the LINKEDIT string table, and macOS 27
+dyld refuses such dylibs when they record SDK 27+. The build then dies with
+"can't find crate for `displaydoc`" (or another proc macro), and a clean
+target dir does not help. `CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTFLAGS`
+records SDK 26.0 instead (`rebuild.sh` sets it). Drop it once Xcode is fixed.
 It must not touch `mlx.metallib`: upstream stages it in `.macos-sidecars`
 (`pre_build.js`) as a signed resource plus a `MacOS/mlx.metallib` symlink.
 Listing it in `externalBin` as well makes bundling fail with

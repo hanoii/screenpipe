@@ -198,6 +198,17 @@ for dir in node_modules/@tauri-apps/*/; do
 done
 # Default features leave Whisper and Parakeet on CPU. Match the official Apple
 # Silicon release: metal for Whisper, parakeet-mlx for Parakeet on the GPU.
+#
+# Xcode 27.2's ld (ld-27106) can leave the LINKEDIT string table 4 bytes off
+# 8-byte alignment, and macOS 27 dyld rejects that, but only in binaries
+# that record SDK 27 or newer: dlopen fails with "mis-aligned LINKEDIT string
+# pool", which rustc reports for proc macros as "can't find crate for
+# `displaydoc`" (or serde_derive, sqlx_macros, ...). Whether a given dylib
+# hits it is luck, so a clean target dir does not help. Recording SDK 26.0
+# skips the check; the minimum stays 14.0 to match tauri.local.conf.json.
+# This env var adds to the [target] rustflags in .cargo/config.toml;
+# RUSTFLAGS would replace them. Drop it once a fixed Xcode ships.
+CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTFLAGS="-C link-arg=-Wl,-platform_version,macos,14.0,26.0" \
 APPLE_SIGNING_IDENTITY="$SIGNING_IDENTITY" \
   bun tauri build --bundles app --config src-tauri/tauri.local.conf.json \
     --features metal,parakeet-mlx
