@@ -68,9 +68,15 @@ install_app() {
   rm -rf "$INSTALLED_PATH"
   cp -R "$BUNDLE_PATH" /Applications/
   # LaunchServices can still hold the replaced bundle right after the copy and
-  # fail with error -600. Retry instead of leaving the app stopped.
-  for _ in $(seq 1 5); do
-    open "$INSTALLED_PATH" && return
+  # fail with error -600. Retry instead of leaving the app stopped, and show
+  # open's own error only when it is not that expected one.
+  local attempt err
+  for attempt in $(seq 1 5); do
+    err="$(open "$INSTALLED_PATH" 2>&1)" && return
+    case "$err" in
+      *-600*) log "Launch attempt $attempt/5 hit LaunchServices error -600 (bundle still settling after the copy); retrying in 2s" ;;
+      *) log "Launch attempt $attempt/5 failed: $err; retrying in 2s" ;;
+    esac
     sleep 2
   done
   die "installed, but could not launch $INSTALLED_PATH; open it manually"
